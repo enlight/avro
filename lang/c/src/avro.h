@@ -146,8 +146,6 @@ void avro_schema_decref(avro_schema_t schema);
 /*
  * io 
  */
-avro_reader_t avro_reader_file(FILE * fp);
-avro_writer_t avro_writer_file(FILE * fp);
 avro_reader_t avro_reader_memory(const char *buf, int64_t len);
 avro_writer_t avro_writer_memory(const char *buf, int64_t len);
 
