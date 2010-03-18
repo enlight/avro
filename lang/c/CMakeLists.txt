@@ -33,7 +33,7 @@ include_directories(${AvroC_SOURCE_DIR}/src)
 include_directories(${AvroC_SOURCE_DIR}/jansson/src)
 
 add_subdirectory(src)
-add_subdirectory(examples)
+# add_subdirectory(examples)
 add_subdirectory(tests)
 
 add_custom_target(pretty

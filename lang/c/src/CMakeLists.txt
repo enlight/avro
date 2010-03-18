@@ -20,7 +20,7 @@
 set(AVRO_SRC
     avro.h
     avro_private.h
-    datafile.c
+    # datafile.c
     datum.c
     datum.h
     datum_equal.c
