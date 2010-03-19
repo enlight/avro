@@ -28,7 +28,11 @@ static int write_datum(avro_writer_t writer,
 
 static int write_long(avro_writer_t writer, int64_t l)
 {
-	char buf[MAX_VARINT_BUF_SIZE];
+	if ((writer->len - writer->written) < MAX_VARINT_BUF_SIZE) {
+		return ENOSPC;
+	}
+	// char buf[MAX_VARINT_BUF_SIZE];
+	char *buf = writer->buf + writer->written;
 	uint8_t bytes_written = 0;
 	uint64_t n = (l << 1) ^ (l >> 63);
 	while (n & ~0x7F) {
@@ -36,7 +40,8 @@ static int write_long(avro_writer_t writer, int64_t l)
 		n >>= 7;
 	}
 	buf[bytes_written++] = (char)n;
-	AVRO_WRITE(writer, buf, bytes_written);
+	writer->written += bytes_written;
+	// return avro_write_raw(writer, buf, bytes_written);
 	return 0;
 }
 
@@ -53,8 +58,7 @@ write_bytes(avro_writer_t writer, const char *bytes, const int64_t len)
 	if (len > 0) {
 		rval = write_long(writer, len);
 		if (0 == rval) {
-			AVRO_WRITE(writer, (char *)bytes, len);
-			return 0;
+			return avro_write_raw(writer, (char *)bytes, len);
 		}
 		return rval;
 	} else if (len == 0) {
@@ -85,11 +89,10 @@ static int write_float(avro_writer_t writer, const float f)
 	buf[1] = (uint8_t) (v.i >> 8);
 	buf[2] = (uint8_t) (v.i >> 16);
 	buf[3] = (uint8_t) (v.i >> 24);
-	AVRO_WRITE(writer, buf, 4);
+	return avro_write_raw(writer, buf, 4);
 #else
-	AVRO_WRITE(writer, (void *)&v.i, 4);
+	return avro_write_raw(writer, (void *)&v.i, 4);
 #endif
-	return 0;
 }
 
 static int write_double(avro_writer_t writer, const double d)
@@ -112,17 +115,15 @@ static int write_double(avro_writer_t writer, const double d)
 	buf[5] = (uint8_t) (v.l >> 40);
 	buf[6] = (uint8_t) (v.l >> 48);
 	buf[7] = (uint8_t) (v.l >> 56);
-	AVRO_WRITE(writer, buf, 8);
+	return avro_write_raw(writer, buf, 8);
 #else
-	AVRO_WRITE(writer, (void *)&v.l, 8);
+	return avro_write_raw(writer, (void *)&v.l, 8);
 #endif
-	return 0;
 }
 
 static int write_boolean(avro_writer_t writer, const int8_t b)
 {
-	AVRO_WRITE(writer, (char *)&b, 1);
-	return 0;
+	return avro_write_raw(writer, (char *)&b, 1);
 }
 
 static int write_null(avro_writer_t writer)

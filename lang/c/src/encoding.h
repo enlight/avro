@@ -21,8 +21,6 @@
 
 #define MAX_VARINT_BUF_SIZE 10
 
-#define AVRO_WRITE(writer, buf, len) \
-{ int rval = avro_write_raw( writer, buf, len ); if(rval) return rval; }
 #define AVRO_READ(reader, buf, len)  \
 { int rval = avro_read_raw( reader, buf, len ); if(rval) return rval; }
 #define AVRO_SKIP(reader, len) \
