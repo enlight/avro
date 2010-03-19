@@ -49,15 +49,19 @@ int32_t rand_int32(void)
 }
 
 void
-write_perf_test(avro_schema_t writers_schema, avro_datum_t datum, char *type)
+write_perf_test(avro_schema_t writers_schema, avro_datum_t datum, char *type, int32_t count)
 {
 	int validate = 0;
-	writer = avro_writer_memory(buf, sizeof(buf));
-	if (avro_write_data
-	    (writer, validate ? writers_schema : NULL, datum)) {
-		fprintf(stderr, "Unable to write %s validate=%d\n",
-			type, validate);
-		exit(EXIT_FAILURE);
+	avro_writer_t writer = avro_writer_memory(buf, sizeof(buf));
+	int i;
+	for (i = 0; i < count; i++) {
+	    if (avro_write_data
+	        (writer, validate ? writers_schema : NULL, datum)) {
+		    fprintf(stderr, "Unable to write %s validate=%d\n",
+			    type, validate);
+		    exit(EXIT_FAILURE);
+	    }
+		avro_writer_reset(writer);
 	}
 	avro_writer_free(writer);
 }
@@ -122,10 +126,7 @@ static int test_string(void)
 	for (i = 0; i < sizeof(strings) / sizeof(strings[0]); i++) {
 		avro_datum_t datum = avro_wrapstring(strings[i]);
 		write_read_check(writer_schema, NULL, datum, "string");
-		int j;
-		for (j = 0; j < 100000; j++) {
-			write_perf_test(writer_schema, datum, "string");
-		}
+		write_perf_test(writer_schema, datum, "string", 1000000);
 		avro_datum_decref(datum);
 	}
 	avro_schema_decref(writer_schema);
@@ -139,10 +140,7 @@ static int test_bytes(void)
 	avro_datum_t datum = avro_wrapbytes(bytes, sizeof(bytes));
 
 	write_read_check(writer_schema, NULL, datum, "bytes");
-	int j;
-	for (j = 0; j < 100000; j++) {
-		write_perf_test(writer_schema, datum, "bytes");
-	}
+	write_perf_test(writer_schema, datum, "bytes", 1000000);
 	avro_datum_decref(datum);
 	avro_schema_decref(writer_schema);
 	return 0;
@@ -155,10 +153,7 @@ static int test_int32(void)
 	for (i = 0; i < 100; i++) {
 		avro_datum_t datum = avro_int32(rand_int32());
 		write_read_check(writer_schema, NULL, datum, "int");
-		int j;
-		for (j = 0; j < 100000; j++) {
-			write_perf_test(writer_schema, datum, "int");
-		}
+		write_perf_test(writer_schema, datum, "int", 1000000);
 		avro_datum_decref(datum);
 	}
 	avro_schema_decref(writer_schema);
@@ -172,10 +167,7 @@ static int test_int64(void)
 	for (i = 0; i < 100; i++) {
 		avro_datum_t datum = avro_int64(rand_int64());
 		write_read_check(writer_schema, NULL, datum, "long");
-		int j;
-		for (j = 0; j < 100000; j++) {
-			write_perf_test(writer_schema, datum, "long");
-		}
+		write_perf_test(writer_schema, datum, "long", 1000000);
 		avro_datum_decref(datum);
 	}
 	avro_schema_decref(writer_schema);
@@ -189,10 +181,7 @@ static int test_double(void)
 	for (i = 0; i < 100; i++) {
 		avro_datum_t datum = avro_double(rand_number(-1.0E10, 1.0E10));
 		write_read_check(schema, NULL, datum, "double");
-		int j;
-		for (j = 0; j < 100000; j++) {
-			write_perf_test(schema, datum, "double");
-		}
+		write_perf_test(schema, datum, "double", 1000000);
 		avro_datum_decref(datum);
 	}
 	avro_schema_decref(schema);
@@ -206,10 +195,7 @@ static int test_float(void)
 	for (i = 0; i < 100; i++) {
 		avro_datum_t datum = avro_double(rand_number(-1.0E10, 1.0E10));
 		write_read_check(schema, NULL, datum, "float");
-		int j;
-		for (j = 0; j < 100000; j++) {
-			write_perf_test(schema, datum, "float");
-		}
+		write_perf_test(schema, datum, "float", 1000000);
 		avro_datum_decref(datum);
 	}
 	avro_schema_decref(schema);
@@ -223,10 +209,7 @@ static int test_boolean(void)
 	for (i = 0; i <= 1; i++) {
 		avro_datum_t datum = avro_boolean(i);
 		write_read_check(schema, NULL, datum, "boolean");
-		int j;
-		for (j = 0; j < 100000; j++) {
-			write_perf_test(schema, datum, "boolean");
-		}
+		write_perf_test(schema, datum, "boolean", 1000000);
 		avro_datum_decref(datum);
 	}
 	avro_schema_decref(schema);
@@ -238,10 +221,7 @@ static int test_null(void)
 	avro_schema_t schema = avro_schema_null();
 	avro_datum_t datum = avro_null();
 	write_read_check(schema, NULL, datum, "null");
-	int j;
-	for (j = 0; j < 100000; j++) {
-		write_perf_test(schema, datum, "null");
-	}
+	write_perf_test(schema, datum, "null", 1000000);
 	avro_datum_decref(datum);
 	return 0;
 }
@@ -263,10 +243,7 @@ static int test_record(void)
 
 	write_read_check(schema, NULL, datum, "record");
 
-	int i;
-	for (i = 0; i < 10000000; i++) {
-		write_perf_test(schema, datum, "record");
-	}
+	write_perf_test(schema, datum, "record", 10000000);
 
 	avro_datum_decref(name_datum);
 	avro_datum_decref(age_datum);
@@ -294,10 +271,7 @@ static int test_enum(void)
 	avro_schema_enum_symbol_append(schema, "Java");
 
 	write_read_check(schema, NULL, datum, "enum");
-	int j;
-	for (j = 0; j < 100000; j++) {
-		write_perf_test(schema, datum, "enum");
-	}
+	write_perf_test(schema, datum, "enum", 1000000);
 	avro_datum_decref(datum);
 	avro_schema_decref(schema);
 	return 0;
@@ -319,10 +293,7 @@ static int test_array(void)
 	}
 
 	write_read_check(schema, NULL, datum, "array");
-	int j;
-	for (j = 0; j < 100000; j++) {
-		write_perf_test(schema, datum, "array");
-	}
+	write_perf_test(schema, datum, "array", 1000000);
 	avro_datum_decref(datum);
 	avro_schema_decref(schema);
 	return 0;
@@ -342,10 +313,7 @@ static int test_map(void)
 		i++;
 	}
 	write_read_check(schema, NULL, datum, "map");
-	int j;
-	for (j = 0; j < 100000; j++) {
-		write_perf_test(schema, datum, "map");
-	}
+	write_perf_test(schema, datum, "map", 1000000);
 	avro_datum_decref(datum);
 	avro_schema_decref(schema);
 	return 0;
@@ -365,10 +333,7 @@ static int test_union(void)
 	union_datum = avro_union(0, datum);
 
 	write_read_check(schema, NULL, union_datum, "union");
-	int j;
-	for (j = 0; j < 100000; j++) {
-		write_perf_test(schema, union_datum, "union");
-	}
+	write_perf_test(schema, union_datum, "union", 1000000);
 	avro_datum_decref(union_datum);
 	avro_datum_decref(datum);
 	avro_schema_decref(schema);
@@ -381,10 +346,7 @@ static int test_fixed(void)
 	avro_schema_t schema = avro_schema_fixed("msg", sizeof(bytes));
 	avro_datum_t datum = avro_wrapfixed("msg", bytes, sizeof(bytes));
 	write_read_check(schema, NULL, datum, "fixed");
-	int j;
-	for (j = 0; j < 100000; j++) {
-		write_perf_test(schema, datum, "fixed");
-	}
+	write_perf_test(schema, datum, "fixed", 1000000);
 	avro_datum_decref(datum);
 	avro_schema_decref(schema);
 	return 0;
