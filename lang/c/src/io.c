@@ -64,58 +64,31 @@ avro_writer_t avro_writer_memory(const char *buf, int64_t len)
 	return mem_writer;
 }
 
-static int
-avro_read_memory(avro_reader_t reader, void *buf, int64_t len)
-{
-	if (len > 0) {
-		if ((reader->len - reader->read) < len) {
-			return ENOSPC;
-		}
-		memcpy(buf, reader->buf + reader->read, len);
-		reader->read += len;
-	}
-	return 0;
-}
-
-#define bytes_available(reader) (reader->end - reader->cur)
-#define buffer_reset(reader) {reader->cur = reader->end = reader->buffer;}
-
 int avro_read(avro_reader_t reader, void *buf, int64_t len)
 {
 	if (buf && len >= 0) {
-		return avro_read_memory(reader, buf, len);
+		if (len > 0) {
+			if ((reader->len - reader->read) < len) {
+				return ENOSPC;
+			}
+			memcpy(buf, reader->buf + reader->read, len);
+			reader->read += len;
+		}
+		return 0;
 	}
 	return EINVAL;
-}
-
-static int avro_skip_memory(avro_reader_t reader, int64_t len)
-{
-	if (len > 0) {
-		if ((reader->len - reader->read) < len) {
-			return ENOSPC;
-		}
-		reader->read += len;
-	}
-	return 0;
 }
 
 int avro_skip(avro_reader_t reader, int64_t len)
 {
 	if (len >= 0) {
-		return avro_skip_memory(reader, len);
-	}
-	return 0;
-}
-
-static int
-avro_write_memory(avro_writer_t writer, void *buf, int64_t len)
-{
-	if (len) {
-		if ((writer->len - writer->written) < len) {
-			return ENOSPC;
+		if (len > 0) {
+			if ((reader->len - reader->read) < len) {
+				return ENOSPC;
+			}
+			reader->read += len;
 		}
-		memcpy((void *)(writer->buf + writer->written), buf, len);
-		writer->written += len;
+		return 0;
 	}
 	return 0;
 }
@@ -123,7 +96,14 @@ avro_write_memory(avro_writer_t writer, void *buf, int64_t len)
 int avro_write(avro_writer_t writer, void *buf, int64_t len)
 {
 	if (buf && len >= 0) {
-		return avro_write_memory(writer, buf, len);
+		if (len) {
+			if ((writer->len - writer->written) < len) {
+				return ENOSPC;
+			}
+			memcpy((void *)(writer->buf + writer->written), buf, len);
+			writer->written += len;
+		}
+		return 0;
 	}
 	return EINVAL;
 }
