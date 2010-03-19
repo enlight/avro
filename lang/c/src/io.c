@@ -16,25 +16,9 @@
  */
 
 #include "avro_private.h"
-#include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
-#include <string.h>
 #include "dump.h"
-
-struct avro_reader_t_ {
-	unsigned long refcount;
-	const char *buf;
-	int64_t len;
-	int64_t read;
-};
-
-struct avro_writer_t_ {
-	unsigned long refcount;
-	const char *buf;
-	int64_t len;
-	int64_t written;
-};
+#include "io.h"
 
 avro_reader_t avro_reader_memory(const char *buf, int64_t len)
 {
@@ -68,11 +52,7 @@ int avro_read(avro_reader_t reader, void *buf, int64_t len)
 {
 	if (buf && len >= 0) {
 		if (len > 0) {
-			if ((reader->len - reader->read) < len) {
-				return ENOSPC;
-			}
-			memcpy(buf, reader->buf + reader->read, len);
-			reader->read += len;
+			return avro_read_raw(reader, buf, len);
 		}
 		return 0;
 	}
@@ -82,13 +62,7 @@ int avro_read(avro_reader_t reader, void *buf, int64_t len)
 int avro_skip(avro_reader_t reader, int64_t len)
 {
 	if (len >= 0) {
-		if (len > 0) {
-			if ((reader->len - reader->read) < len) {
-				return ENOSPC;
-			}
-			reader->read += len;
-		}
-		return 0;
+		return avro_skip_raw(reader, len);
 	}
 	return 0;
 }
@@ -97,11 +71,7 @@ int avro_write(avro_writer_t writer, void *buf, int64_t len)
 {
 	if (buf && len >= 0) {
 		if (len) {
-			if ((writer->len - writer->written) < len) {
-				return ENOSPC;
-			}
-			memcpy((void *)(writer->buf + writer->written), buf, len);
-			writer->written += len;
+			return avro_write_raw(writer, buf, len);
 		}
 		return 0;
 	}
