@@ -1,4 +1,4 @@
-Avro = {}
+var Avro = {}
 Avro.raw = {}
 
 Avro.raw.create_byte_buffer_from_string = function(data_string) {
@@ -49,7 +49,7 @@ Avro.raw.decode_string = function(byte_buffer) {
     var bytes = this.decode_bytes(byte_buffer);
     var str = ''
     var i = 0;
-    var c = c1 = c2 = 0;
+    var c = 0, c1 = 0, c2 = 0, c3 = 0;
     while (i < bytes.length) {
         c = bytes[i]
         if (c < 128) {
@@ -76,8 +76,8 @@ Avro.raw.decode_double = function(byte_buffer) {
 }
 
 Avro.raw.decode_boolean = function(byte_buffer) {
-    var byte = byte_buffer.read_byte();
-    if (byte == 0) {
+    var b = byte_buffer.read_byte();
+    if (b == 0) {
         return false;
     }
     return true;
