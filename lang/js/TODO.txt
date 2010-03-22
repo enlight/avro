@@ -1,0 +1,16 @@
+ * Better testing arrangement.
+ * Automate test running in the build.xml
+ * Set up Ivy or whatever to autodownload the Closure compiler?
+ * Look at switching the UTF-8 decoding over to using decodeURIComponent.
+ * Finish implementing the basic types:
+   * Floats
+   * Doubles
+ * Test more things, like:
+   * More ranges of numbers, including 64 bit values.
+   * UTF-8 encoded string with both European languages and Eastern languages.
+ * Look at switching over to the advanced compilation mode for the Closure compiler.
+ * Start adding hire level layers of decoding, like record, enum, etc and the ability to use schemas.
+ * When this is closer to being useful:
+   * Get into the main Avro SVN repository.
+   * Get a JIRA component for this.
+   * Documentation...
