@@ -56,12 +56,12 @@ Avro.raw.decode_string = function(byte_buffer) {
             str += String.fromCharCode(c);
             i++;
         } else if((c > 191) && (c < 224)) {
-            c2 = a.charCodeAt(i+1);
+            c2 = bytes[i+1];
             str += String.fromCharCode(((c & 31) << 6) | (c2 & 63));
             i += 2;
         } else {
-            c2 = a.charCodeAt(i+1);
-            c3 = a.charCodeAt(i+2);
+            c2 = bytes[i+1];
+            c3 = bytes[i+2];
             str += String.fromCharCode(((c & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63));
             i += 3;
         }
