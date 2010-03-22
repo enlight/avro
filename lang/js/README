@@ -1,3 +1,7 @@
+This is a first pass at supporting Avro data within pure JavaScript. The intent here is for this to be used within a web browser, so the focus will be on decoding Avro data at first with encoding to come in the future.
+
+Feel free to fork this repository and submit changes back to me (Bruce Mitchener).
+
  * Better testing arrangement.
  * Automate test running in the build.xml
  * Set up Ivy or whatever to autodownload the Closure compiler?
