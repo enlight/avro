@@ -78,9 +78,9 @@ Avro.raw.decode_double = function(byte_buffer) {
 Avro.raw.decode_boolean = function(byte_buffer) {
     var byte = byte_buffer.read_byte();
     if (byte == 0) {
-        return False;
+        return false;
     }
-    return True;
+    return true;
 }
 
 Avro.raw.decode_null = function(byte_buffer) {
