@@ -50,8 +50,8 @@ Avro.raw.decode_string = function(byte_buffer) {
     var str = ''
     var i = 0;
     var c = c1 = c2 = 0;
-    while (i < a.length) {
-        c = a.charCodeAt(i);
+    while (i < bytes.length) {
+        c = bytes[i]
         if (c < 128) {
             str += String.fromCharCode(c);
             i++;
