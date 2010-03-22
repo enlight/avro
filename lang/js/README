@@ -4,7 +4,7 @@ Feel free to fork this repository and submit changes back to me (Bruce Mitchener
 
  * Better testing arrangement.
  * Automate test running in the build.xml
- * Set up Ivy or whatever to autodownload the Closure compiler?
+ * Can Ivy or Ant download the Closure compiler for us rather than including it?
  * Look at switching the UTF-8 decoding over to using decodeURIComponent.
  * Finish implementing the basic types:
    * Floats
