@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <string.h>
 #include "types.h"
+#include "allocator.h"
 
 #define MAX_VARINT_BUF_SIZE 10
 
@@ -107,7 +108,7 @@ static int read_bytes(avro_reader_t reader, char **bytes, int64_t * len)
 	if (rval) {
 		return rval;
 	}
-	*bytes = malloc(*len + 1);
+	*bytes = g_avro_allocator.malloc(*len + 1);
 	if (!*bytes) {
 		return ENOMEM;
 	}

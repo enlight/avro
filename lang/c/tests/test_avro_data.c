@@ -20,6 +20,7 @@
 #include <limits.h>
 #include <time.h>
 #include <string.h>
+#include "allocator_system.h"
 
 char buf[4096];
 avro_reader_t reader;
@@ -344,6 +345,7 @@ int main(void)
 		"union", test_union}
 	};
 
+    avro_allocator_system_initialize();
 	init_rand();
 	for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
 		struct avro_tests *test = tests + i;

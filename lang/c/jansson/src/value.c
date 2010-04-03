@@ -14,6 +14,7 @@
 #include "jansson_private.h"
 #include "utf.h"
 #include "util.h"
+#include "allocator.h"
 
 
 static inline void json_init(json_t *json, json_type type)
@@ -52,15 +53,15 @@ static void value_decref(void *value)
 
 json_t *json_object(void)
 {
-    json_object_t *object = malloc(sizeof(json_object_t));
+    json_object_t *object = g_avro_allocator.malloc(sizeof(json_object_t));
     if(!object)
         return NULL;
     json_init(&object->json, JSON_OBJECT);
 
     if(hashtable_init(&object->hashtable, hash_string, string_equal,
-                      free, value_decref))
+                      g_avro_allocator.free, value_decref))
     {
-        free(object);
+        g_avro_allocator.free(object);
         return NULL;
     }
 
@@ -72,7 +73,7 @@ json_t *json_object(void)
 static void json_delete_object(json_object_t *object)
 {
     hashtable_close(&object->hashtable);
-    free(object);
+    g_avro_allocator.free(object);
 }
 
 unsigned int json_object_size(const json_t *json)
@@ -111,7 +112,7 @@ int json_object_set_new_nocheck(json_t *json, const char *key, json_t *value)
     }
     object = json_to_object(json);
 
-    if(hashtable_set(&object->hashtable, strdup(key), value))
+    if(hashtable_set(&object->hashtable, avro_strdup(key), value))
     {
         json_decref(value);
         return -1;
@@ -227,7 +228,7 @@ json_t *json_object_iter_value(void *iter)
 
 json_t *json_array(void)
 {
-    json_array_t *array = malloc(sizeof(json_array_t));
+    json_array_t *array = g_avro_allocator.malloc(sizeof(json_array_t));
     if(!array)
         return NULL;
     json_init(&array->json, JSON_ARRAY);
@@ -235,9 +236,9 @@ json_t *json_array(void)
     array->entries = 0;
     array->size = 8;
 
-    array->table = malloc(array->size * sizeof(json_t *));
+    array->table = g_avro_allocator.malloc(array->size * sizeof(json_t *));
     if(!array->table) {
-        free(array);
+        g_avro_allocator.free(array);
         return NULL;
     }
 
@@ -253,8 +254,8 @@ static void json_delete_array(json_array_t *array)
     for(i = 0; i < array->entries; i++)
         json_decref(array->table[i]);
 
-    free(array->table);
-    free(array);
+    g_avro_allocator.free(array->table);
+    g_avro_allocator.free(array);
 }
 
 unsigned int json_array_size(const json_t *json)
@@ -330,7 +331,7 @@ static json_t **json_array_grow(json_array_t *array,
     old_table = array->table;
 
     new_size = max(array->size + amount, array->size * 2);
-    new_table = malloc(new_size * sizeof(json_t *));
+    new_table = g_avro_allocator.malloc(new_size * sizeof(json_t *));
     if(!new_table)
         return NULL;
 
@@ -339,7 +340,7 @@ static json_t **json_array_grow(json_array_t *array,
 
     if(copy) {
         array_copy(array->table, 0, old_table, 0, array->entries);
-        free(old_table);
+        g_avro_allocator.free(old_table);
         return array->table;
     }
 
@@ -400,7 +401,7 @@ int json_array_insert_new(json_t *json, unsigned int index, json_t *value)
         array_copy(array->table, 0, old_table, 0, index);
         array_copy(array->table, index + 1, old_table, index,
                    array->entries - index);
-        free(old_table);
+        g_avro_allocator.free(old_table);
     }
     else
         array_move(array, index + 1, index, array->entries - index);
@@ -478,14 +479,14 @@ json_t *json_string_nocheck(const char *value)
     if(!value)
         return NULL;
 
-    string = malloc(sizeof(json_string_t));
+    string = g_avro_allocator.malloc(sizeof(json_string_t));
     if(!string)
         return NULL;
     json_init(&string->json, JSON_STRING);
 
-    string->value = strdup(value);
+    string->value = avro_strdup(value);
     if(!string->value) {
-        free(string);
+        g_avro_allocator.free(string);
         return NULL;
     }
 
@@ -516,12 +517,12 @@ int json_string_set(const json_t *json, const char *value)
     if(!json_is_string(json) || !value || !utf8_check_string(value, -1))
         return -1;
 
-    dup = strdup(value);
+    dup = avro_strdup(value);
     if(!dup)
         return -1;
 
     string = json_to_string(json);
-    free(string->value);
+    g_avro_allocator.free(string->value);
     string->value = dup;
 
     return 0;
@@ -529,8 +530,8 @@ int json_string_set(const json_t *json, const char *value)
 
 static void json_delete_string(json_string_t *string)
 {
-    free(string->value);
-    free(string);
+    g_avro_allocator.free(string->value);
+    g_avro_allocator.free(string);
 }
 
 
@@ -538,7 +539,7 @@ static void json_delete_string(json_string_t *string)
 
 json_t *json_integer(int value)
 {
-    json_integer_t *integer = malloc(sizeof(json_integer_t));
+    json_integer_t *integer = g_avro_allocator.malloc(sizeof(json_integer_t));
     if(!integer)
         return NULL;
     json_init(&integer->json, JSON_INTEGER);
@@ -567,7 +568,7 @@ int json_integer_set(const json_t *json, int value)
 
 static void json_delete_integer(json_integer_t *integer)
 {
-    free(integer);
+    g_avro_allocator.free(integer);
 }
 
 
@@ -575,7 +576,7 @@ static void json_delete_integer(json_integer_t *integer)
 
 json_t *json_real(double value)
 {
-    json_real_t *real = malloc(sizeof(json_real_t));
+    json_real_t *real = g_avro_allocator.malloc(sizeof(json_real_t));
     if(!real)
         return NULL;
     json_init(&real->json, JSON_REAL);
@@ -604,7 +605,7 @@ int json_real_set(const json_t *json, double value)
 
 static void json_delete_real(json_real_t *real)
 {
-    free(real);
+    g_avro_allocator.free(real);
 }
 
 

@@ -19,11 +19,12 @@
 #include <stdlib.h>
 #include "dump.h"
 #include "io.h"
+#include "allocator.h"
 
 avro_reader_t avro_reader_memory(const char *buf, int64_t len)
 {
 	avro_reader_t mem_reader =
-	    malloc(sizeof(struct avro_reader_t_));
+	    g_avro_allocator.malloc(sizeof(struct avro_reader_t_));
 	if (!mem_reader) {
 		return NULL;
 	}
@@ -37,7 +38,7 @@ avro_reader_t avro_reader_memory(const char *buf, int64_t len)
 avro_writer_t avro_writer_memory(const char *buf, int64_t len)
 {
 	avro_writer_t mem_writer =
-	    malloc(sizeof(struct avro_writer_t_));
+	    g_avro_allocator.malloc(sizeof(struct avro_writer_t_));
 	if (!mem_writer) {
 		return NULL;
 	}
@@ -100,11 +101,11 @@ void avro_reader_dump(avro_reader_t reader, FILE * fp)
 
 void avro_reader_free(avro_reader_t reader)
 {
-	free(reader);
+	g_avro_allocator.free(reader);
 }
 
 void avro_writer_free(avro_writer_t writer)
 {
-	free(writer);
+	g_avro_allocator.free(writer);
 }
 

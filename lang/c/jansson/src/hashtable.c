@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include "config.h"
 #include "hashtable.h"
+#include "allocator.h"
 
 typedef struct hashtable_list list_t;
 typedef struct hashtable_pair pair_t;
@@ -128,7 +129,7 @@ static int hashtable_do_del(hashtable_t *hashtable,
     if(hashtable->free_value)
         hashtable->free_value(pair->value);
 
-    free(pair);
+    g_avro_allocator.free(pair);
     hashtable->size--;
 
     return 0;
@@ -147,7 +148,7 @@ static void hashtable_do_clear(hashtable_t *hashtable)
             hashtable->free_key(pair->key);
         if(hashtable->free_value)
             hashtable->free_value(pair->value);
-        free(pair);
+        g_avro_allocator.free(pair);
     }
 }
 
@@ -157,12 +158,12 @@ static int hashtable_do_rehash(hashtable_t *hashtable)
     pair_t *pair;
     unsigned int i, index, new_size;
 
-    free(hashtable->buckets);
+    g_avro_allocator.free(hashtable->buckets);
 
     hashtable->num_buckets++;
     new_size = num_buckets(hashtable);
 
-    hashtable->buckets = malloc(new_size * sizeof(bucket_t));
+    hashtable->buckets = g_avro_allocator.malloc(new_size * sizeof(bucket_t));
     if(!hashtable->buckets)
         return -1;
 
@@ -189,13 +190,13 @@ static int hashtable_do_rehash(hashtable_t *hashtable)
 hashtable_t *hashtable_create(key_hash_fn hash_key, key_cmp_fn cmp_keys,
                               free_fn free_key, free_fn free_value)
 {
-    hashtable_t *hashtable = malloc(sizeof(hashtable_t));
+    hashtable_t *hashtable = g_avro_allocator.malloc(sizeof(hashtable_t));
     if(!hashtable)
         return NULL;
 
     if(hashtable_init(hashtable, hash_key, cmp_keys, free_key, free_value))
     {
-        free(hashtable);
+        g_avro_allocator.free(hashtable);
         return NULL;
     }
 
@@ -205,7 +206,7 @@ hashtable_t *hashtable_create(key_hash_fn hash_key, key_cmp_fn cmp_keys,
 void hashtable_destroy(hashtable_t *hashtable)
 {
     hashtable_close(hashtable);
-    free(hashtable);
+    g_avro_allocator.free(hashtable);
 }
 
 int hashtable_init(hashtable_t *hashtable,
@@ -216,7 +217,7 @@ int hashtable_init(hashtable_t *hashtable,
 
     hashtable->size = 0;
     hashtable->num_buckets = 0;  /* index to primes[] */
-    hashtable->buckets = malloc(num_buckets(hashtable) * sizeof(bucket_t));
+    hashtable->buckets = g_avro_allocator.malloc(num_buckets(hashtable) * sizeof(bucket_t));
     if(!hashtable->buckets)
         return -1;
 
@@ -239,7 +240,7 @@ int hashtable_init(hashtable_t *hashtable,
 void hashtable_close(hashtable_t *hashtable)
 {
     hashtable_do_clear(hashtable);
-    free(hashtable->buckets);
+    g_avro_allocator.free(hashtable->buckets);
 }
 
 int hashtable_set(hashtable_t *hashtable, void *key, void *value)
@@ -258,7 +259,7 @@ int hashtable_set(hashtable_t *hashtable, void *key, void *value)
         if(hashtable_do_rehash(hashtable))
             return -1;
 
-    pair = malloc(sizeof(pair_t));
+    pair = g_avro_allocator.malloc(sizeof(pair_t));
     if(!pair)
         return -1;
 

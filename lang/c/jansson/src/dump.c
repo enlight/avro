@@ -13,6 +13,7 @@
 #include <jansson.h>
 #include "jansson_private.h"
 #include "strbuffer.h"
+#include "allocator.h"
 
 #define MAX_INTEGER_STR_LENGTH  100
 #define MAX_REAL_STR_LENGTH     100
@@ -290,7 +291,7 @@ char *json_dumps(const json_t *json, unsigned long flags)
         return NULL;
     }
 
-    result = strdup(strbuffer_value(&strbuff));
+    result = avro_strdup(strbuffer_value(&strbuff));
     strbuffer_close(&strbuff);
 
     return result;
