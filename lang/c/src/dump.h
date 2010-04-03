@@ -19,7 +19,7 @@
 #define DUMP_H
 
 #include <stdio.h>
-#include <sys/types.h>
+#include "types.h"
 
 void dump(FILE * out, const caddr_t addr, const long len);
 

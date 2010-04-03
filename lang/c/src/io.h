@@ -15,6 +15,7 @@
  * permissions and limitations under the License. 
  */
 
+#include "config.h"
 #include "avro_private.h"
 #include <errno.h>
 #include <string.h>

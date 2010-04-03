@@ -24,7 +24,7 @@ extern "C" {
 #endif
 
 #include <stdio.h>
-#include <stdint.h>
+#include "types.h"
 
 enum avro_type_t {
 	AVRO_STRING,
@@ -191,7 +191,7 @@ avro_datum_t avro_givefixed(const char *name, const char *bytes,
 			    const int64_t size);
 avro_datum_t avro_map(void);
 avro_datum_t avro_array(void);
-avro_datum_t avro_union(int64_t discriminant, const avro_datum_t datum);
+avro_datum_t avro_union(int64_t discriminant, avro_datum_t datum);
 
 /* getters */
 int avro_string_get(avro_datum_t datum, char **p);

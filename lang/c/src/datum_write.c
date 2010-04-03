@@ -28,13 +28,17 @@ static int write_datum(avro_writer_t writer,
 
 static int write_long(avro_writer_t writer, int64_t l)
 {
+    char *buf;
+    uint8_t bytes_written;
+    uint64_t n;
+
 	if ((writer->len - writer->written) < MAX_VARINT_BUF_SIZE) {
 		return ENOSPC;
 	}
 	// char buf[MAX_VARINT_BUF_SIZE];
-	char *buf = writer->buf + writer->written;
-	uint8_t bytes_written = 0;
-	uint64_t n = (l << 1) ^ (l >> 63);
+	buf = writer->buf + writer->written;
+	bytes_written = 0;
+	n = (l << 1) ^ (l >> 63);
 	while (n & ~0x7F) {
 		buf[bytes_written++] = (char)((((uint8_t) n) & 0x7F) | 0x80);
 		n >>= 7;
