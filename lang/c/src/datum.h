@@ -76,7 +76,7 @@ struct avro_record_datum_t {
 	struct avro_obj_t obj;
 	const char *name;
 	const char *space;
-	const char **field_order;
+	avro_atom_t *field_order;
 	st_table *fields_byname;
 	int32_t num_fields;
 };

@@ -61,7 +61,7 @@ avro_atom_table_t avro_atom_table_create(int32_t size)
 	avro_atom_table_t table;
 	int32_t i;
 
-	table = (avro_atom_table_t)malloc(sizeof(avro_atom_table_t));
+	table = (avro_atom_table_t)malloc(sizeof(struct avro_atom_table_t_));
 	table->size = size;
 	table->count = 0;
 	table->entries = malloc(sizeof(avro_atom_entry_t) * table->size);
@@ -84,15 +84,34 @@ void avro_atom_table_destroy(avro_atom_table_t table)
 {
 	int32_t i;
 	for (i = 0; i < table->size; i++) {
-		if (table->entries[i].str)
+		if (table->entries[i].str) {
 			free(table->entries[i].str);
+		}
 	}
 	free(table->entries);
 	free(table->hashtab);
 	free(table);
 }
 
-avro_atom_t avro_atom_table_add(avro_atom_table_t table, const char *str, int32_t length)
+void avro_atom_table_dump(avro_atom_table_t table)
+{
+	int32_t atom;
+	printf("Atom table dump:\n");
+	for (atom = 0; atom < table->size; atom++) {
+		avro_atom_entry_t *entry = &(table->entries[atom]);
+		if (entry->str) {
+			printf("    %d - %s - %d refs\n", atom, entry->str, entry->refcount);
+		}
+	}
+	printf("--\n");
+}
+
+avro_atom_t avro_atom_table_add(avro_atom_table_t table, const char *str)
+{
+	return avro_atom_table_add_length(table, str, strlen(str));
+}
+
+avro_atom_t avro_atom_table_add_length(avro_atom_table_t table, const char *str, int32_t length)
 {
 	int32_t hash_value = _atom_string_hash(str);
 	int32_t ind, new_size, old_size;
@@ -189,6 +208,14 @@ int avro_atom_table_describe(avro_atom_table_t table, avro_atom_t atom, const ch
 		*length = table->entries[atom].length;
 	}
 	return -1;
+}
+
+const char *avro_atom_table_to_string(avro_atom_table_t table, avro_atom_t atom)
+{
+	if (NULL != table->entries[atom].str) {
+		return table->entries[atom].str;
+	}
+	return "(invalid atom)";
 }
 
 avro_atom_t avro_atom_table_incref(avro_atom_table_t table, avro_atom_t atom)

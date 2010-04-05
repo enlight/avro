@@ -53,7 +53,7 @@ write_record(avro_writer_t writer, const avro_encoding_t * enc,
 		struct avro_record_datum_t *record =
 		    avro_datum_to_record(datum);
 		for (i = 0; i < record->num_fields; i++) {
-			const char *name = record->field_order[i];
+			avro_atom_t name = record->field_order[i];
 			check(rval,
 			      avro_record_get(datum, name, &field_datum));
 			check(rval,

@@ -67,7 +67,7 @@ static int record_free_foreach(int i, struct avro_record_field_t *field,
 	AVRO_UNUSED(i);
 	AVRO_UNUSED(arg);
 
-	free(field->name);
+	avro_atom_decref(field->name);
 	avro_schema_decref(field->type);
 	free(field);
 	return ST_DELETE;
@@ -416,7 +416,7 @@ avro_schema_record_field_append(const avro_schema_t record_schema,
 	if (!new_field) {
 		return ENOMEM;
 	}
-	new_field->name = strdup(field_name);
+	new_field->name = avro_atom_add(field_name);
 	new_field->type = avro_schema_incref(field_schema);
 	st_insert(record->fields, record->fields->num_entries,
 		  (st_data_t) new_field);
@@ -455,7 +455,7 @@ avro_schema_t avro_schema_record(const char *name, const char *space)
 		free(record);
 		return NULL;
 	}
-	record->fields_byname = st_init_strtable_with_size(DEFAULT_TABLE_SIZE);
+	record->fields_byname = st_init_numtable_with_size(DEFAULT_TABLE_SIZE);
 	if (!record->fields_byname) {
 		st_free_table(record->fields);
 		free(record->name);
@@ -918,8 +918,9 @@ avro_schema_t avro_schema_copy(avro_schema_t schema)
 				st_lookup(record_schema->fields, i, &val.data);
 				avro_schema_t type_copy =
 				    avro_schema_copy(val.field->type);
+				// FIXME: Remove avro_atom_to_string() here.
 				avro_schema_record_field_append(new_schema,
-								val.field->name,
+								avro_atom_to_string(val.field->name),
 								type_copy);
 			}
 		}
@@ -1043,7 +1044,7 @@ static int write_field(avro_writer_t out, struct avro_record_field_t *field)
 {
 	int rval;
 	check(rval, avro_write_str(out, "{\"name\":\""));
-	check(rval, avro_write_str(out, field->name));
+	check(rval, avro_write_str(out, avro_atom_to_string(field->name)));
 	check(rval, avro_write_str(out, "\",\"type\":"));
 	check(rval, avro_schema_to_json(field->type, out));
 	return avro_write_str(out, "}");

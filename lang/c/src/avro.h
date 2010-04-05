@@ -26,6 +26,8 @@ extern "C" {
 #include <stdio.h>
 #include <stdint.h>
 
+typedef int32_t avro_atom_t;
+
 enum avro_type_t {
 	AVRO_STRING,
 	AVRO_BYTES,
@@ -115,7 +117,7 @@ avro_schema_t avro_schema_null(void);
 
 avro_schema_t avro_schema_record(const char *name, const char *space);
 avro_schema_t avro_schema_record_field_get(const avro_schema_t
-					   record, const char *field_name);
+					   record, avro_atom_t field_name);
 int avro_schema_record_field_append(const avro_schema_t record,
 				    const char *field_name,
 				    const avro_schema_t type);
@@ -211,7 +213,7 @@ int avro_double_get(avro_datum_t datum, double *d);
 int avro_boolean_get(avro_datum_t datum, int8_t * i);
 
 int avro_fixed_get(avro_datum_t datum, char **bytes, int64_t * size);
-int avro_record_get(const avro_datum_t record, const char *field_name,
+int avro_record_get(const avro_datum_t record, avro_atom_t field_name,
 		    avro_datum_t * value);
 int avro_map_get(const avro_datum_t datum, const char *key,
 		 avro_datum_t * value);
@@ -240,7 +242,7 @@ int avro_givefixed_set(avro_datum_t datum, const char *bytes,
 int avro_wrapfixed_set(avro_datum_t datum, const char *bytes,
 		       const int64_t size);
 
-int avro_record_set(const avro_datum_t record, const char *field_name,
+int avro_record_set(const avro_datum_t record, avro_atom_t field_name,
 		    const avro_datum_t value);
 int avro_map_set(const avro_datum_t map, const char *key,
 		 const avro_datum_t value);
@@ -289,24 +291,27 @@ int avro_file_reader_read(avro_file_reader_t reader,
 int avro_file_reader_close(avro_file_reader_t reader);
 
 /* Atom handling */
-typedef int32_t avro_atom_t;
-
 typedef struct avro_atom_table_t_ *avro_atom_table_t;
 extern avro_atom_table_t g_avro_atom_table;
 
 avro_atom_table_t avro_atom_table_create(int32_t);
 void avro_atom_table_destroy(avro_atom_table_t table);
+void avro_atom_table_dump(avro_atom_table_t table);
 
-avro_atom_t avro_atom_table_add(avro_atom_table_t table, const char *s, int32_t length);
+avro_atom_t avro_atom_table_add(avro_atom_table_t table, const char *s);
+avro_atom_t avro_atom_table_add_length(avro_atom_table_t table, const char *s, int32_t length);
 avro_atom_t avro_atom_table_lookup(avro_atom_table_t table, const char *s, int32_t length);
 int avro_atom_table_describe(avro_atom_table_t table, avro_atom_t atom, const char **s, int32_t *length);
+const char *avro_atom_table_to_string(avro_atom_table_t table, avro_atom_t atom);
 
 avro_atom_t avro_atom_table_incref(avro_atom_table_t table, avro_atom_t atom);
 void avro_atom_table_decref(avro_atom_table_t table, avro_atom_t atom);
 
-#define avro_atom_add(s, length) avro_atom_table_add(g_avro_atom_table, s, length)
+#define avro_atom_add(s) avro_atom_table_add(g_avro_atom_table, s)
+#define avro_atom_add_length(s, length) avro_atom_table_add_length(g_avro_atom_table, s, length)
 #define avro_atom_lookup(s, length) avro_atom_table_lookup(g_avro_atom_table, s, length)
 #define avro_atom_describe(atom, s, length) avro_atom_table_describe(g_avro_atom_table, atom, s, length)
+#define avro_atom_to_string(atom) avro_atom_table_to_string(g_avro_atom_table, atom)
 #define avro_atom_incref(atom) avro_atom_table_incref(g_avro_atom_table, atom)
 #define avro_atom_decref(atom) avro_atom_table_decref(g_avro_atom_table, atom)
 

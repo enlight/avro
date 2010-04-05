@@ -416,7 +416,7 @@ avro_datum_t avro_record(const char *name, const char *space)
 		free((void *)datum);
 		return NULL;
 	}
-	datum->field_order = (const char**)malloc(DEFAULT_FIELD_COUNT * sizeof(const char*));
+	datum->field_order = (avro_atom_t*)malloc(DEFAULT_FIELD_COUNT * sizeof(avro_atom_t));
 	if (!datum->field_order) {
 		if (space) {
 			free((void *)datum->space);
@@ -425,7 +425,7 @@ avro_datum_t avro_record(const char *name, const char *space)
 		free(datum);
 		return NULL;
 	}
-	datum->fields_byname = st_init_strtable_with_size(DEFAULT_TABLE_SIZE);
+	datum->fields_byname = st_init_numtable_with_size(DEFAULT_TABLE_SIZE);
 	if (!datum->fields_byname) {
 		free(datum->field_order);
 		if (space) {
@@ -442,14 +442,14 @@ avro_datum_t avro_record(const char *name, const char *space)
 }
 
 int
-avro_record_get(const avro_datum_t datum, const char *field_name,
+avro_record_get(const avro_datum_t datum, avro_atom_t field_name,
 		avro_datum_t * field)
 {
 	union {
 		avro_datum_t field;
 		st_data_t data;
 	} val;
-	if (is_avro_datum(datum) && is_avro_record(datum) && field_name) {
+	if (is_avro_datum(datum) && is_avro_record(datum)) {
 		if (st_lookup
 		    (avro_datum_to_record(datum)->fields_byname,
 		     (st_data_t) field_name, &(val.data))) {
@@ -461,13 +461,11 @@ avro_record_get(const avro_datum_t datum, const char *field_name,
 }
 
 int
-avro_record_set(const avro_datum_t datum, const char *field_name,
+avro_record_set(const avro_datum_t datum, avro_atom_t field_name,
 		const avro_datum_t field_value)
 {
-	char *key = (char *)field_name;
 	avro_datum_t old_field;
-
-	if (is_avro_datum(datum) && is_avro_record(datum) && field_name) {
+	if (is_avro_datum(datum) && is_avro_record(datum)) {
 		if (avro_record_get(datum, field_name, &old_field) == 0) {
 			/* Overriding old value */
 			avro_datum_decref(old_field);
@@ -475,17 +473,15 @@ avro_record_set(const avro_datum_t datum, const char *field_name,
 			/* Inserting new value */
 			struct avro_record_datum_t *record =
 			    avro_datum_to_record(datum);
-			key = strdup(field_name);
-			if (!key) {
-				return ENOMEM;
-			}
-			record->field_order = (const char**)realloc(record->field_order,
-			    (record->num_fields + 1) * sizeof(const char*));
-			record->field_order[record->num_fields++] = key;
+			record->field_order = (avro_atom_t*)realloc(record->field_order,
+			    (record->num_fields + 1) * sizeof(avro_atom_t));
+			avro_atom_incref(field_name);
+			record->field_order[record->num_fields++] = field_name;
 		}
 		avro_datum_incref(field_value);
+		avro_atom_incref(field_name);
 		st_insert(avro_datum_to_record(datum)->fields_byname,
-			  (st_data_t) key, (st_data_t) field_value);
+			  (st_data_t) field_name, (st_data_t) field_value);
 		return 0;
 	}
 	return EINVAL;
@@ -717,6 +713,15 @@ avro_array_append_datum(const avro_datum_t array_datum,
 	return 0;
 }
 
+static int atom_datum_free_foreach(avro_atom_t key, avro_datum_t datum, void *arg)
+{
+	AVRO_UNUSED(arg);
+
+	avro_datum_decref(datum);
+	avro_atom_decref(key);
+	return ST_DELETE;
+}
+
 static int char_datum_free_foreach(char *key, avro_datum_t datum, void *arg)
 {
 	AVRO_UNUSED(arg);
@@ -791,9 +796,9 @@ static void avro_datum_free(avro_datum_t datum)
 					free((void *)record->space);
 				}
 				st_foreach(record->fields_byname,
-					   char_datum_free_foreach, 0);
+					   atom_datum_free_foreach, 0);
 				for (i = 0; i < record->num_fields; i++) {
-					// free((void *)record->field_order[i]);
+					avro_atom_decref(record->field_order[i]);
 				}
 				free(record->field_order);
 				st_free_table(record->fields_byname);
