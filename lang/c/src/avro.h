@@ -209,6 +209,7 @@ int avro_record_get(const avro_datum_t record, const char *field_name,
 		    avro_datum_t * value);
 int avro_map_get(const avro_datum_t datum, const char *key,
 		 avro_datum_t * value);
+int avro_array_get(const avro_datum_t datum, int64_t index, avro_datum_t * value);
 
 /* setters */
 int avro_string_set(avro_datum_t datum, const char *p);
@@ -280,6 +281,20 @@ int avro_file_writer_close(avro_file_writer_t writer);
 int avro_file_reader_read(avro_file_reader_t reader,
 			  avro_schema_t readers_schema, avro_datum_t * datum);
 int avro_file_reader_close(avro_file_reader_t reader);
+
+/* Atom handling */
+typedef int32_t avro_atom_t;
+
+typedef struct avro_atom_table_t_ *avro_atom_table_t;
+
+avro_atom_table_t avro_atom_table_new(int32_t);
+void avro_atom_table_free(avro_atom_table_t table);
+
+avro_atom_t avro_atom_table_add(avro_atom_table_t table, const char *s, int32_t length);
+int avro_atom_get(avro_atom_table_t table, avro_atom_t atom, const char **s, int32_t *length);
+
+avro_atom_t avro_atom_incref(avro_atom_table_t table, avro_atom_t atom);
+void avro_atom_decref(avro_atom_table_t table, avro_atom_t atom);
 
 CLOSE_EXTERN
 #endif

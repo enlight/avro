@@ -462,6 +462,7 @@ avro_schema_t avro_schema_record(const char *name, const char *space)
 		free(record);
 		return NULL;
 	}
+	record->num_fields = 0;
 
 	avro_schema_init(&record->obj, AVRO_RECORD);
 	return &record->obj;

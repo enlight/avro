@@ -18,6 +18,7 @@
 #
 
 set(AVRO_SRC
+    atom_table.c
     avro.h
     avro_private.h
     datafile.c

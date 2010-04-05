@@ -22,6 +22,7 @@
 #include "datum.h"
 #include "encoding.h"
 
+#define DEFAULT_FIELD_COUNT 10
 #define DEFAULT_TABLE_SIZE 32
 
 static void avro_datum_init(avro_datum_t datum, avro_type_t type)
@@ -415,7 +416,7 @@ avro_datum_t avro_record(const char *name, const char *space)
 		free((void *)datum);
 		return NULL;
 	}
-	datum->field_order = st_init_numtable_with_size(DEFAULT_TABLE_SIZE);
+	datum->field_order = (const char**)malloc(DEFAULT_FIELD_COUNT * sizeof(const char*));
 	if (!datum->field_order) {
 		if (space) {
 			free((void *)datum->space);
@@ -426,7 +427,7 @@ avro_datum_t avro_record(const char *name, const char *space)
 	}
 	datum->fields_byname = st_init_strtable_with_size(DEFAULT_TABLE_SIZE);
 	if (!datum->fields_byname) {
-		st_free_table(datum->field_order);
+		free(datum->field_order);
 		if (space) {
 			free((void *)datum->space);
 		}
@@ -434,6 +435,7 @@ avro_datum_t avro_record(const char *name, const char *space)
 		free(datum);
 		return NULL;
 	}
+	datum->num_fields = 0;
 
 	avro_datum_init(&datum->obj, AVRO_RECORD);
 	return &datum->obj;
@@ -477,9 +479,9 @@ avro_record_set(const avro_datum_t datum, const char *field_name,
 			if (!key) {
 				return ENOMEM;
 			}
-			st_insert(record->field_order,
-				  record->field_order->num_entries,
-				  (st_data_t) key);
+			record->field_order = (const char**)realloc(record->field_order,
+			    (record->num_fields + 1) * sizeof(const char*));
+			record->field_order[record->num_fields++] = key;
 		}
 		avro_datum_incref(field_value);
 		st_insert(avro_datum_to_record(datum)->fields_byname,
@@ -675,14 +677,28 @@ avro_datum_t avro_array(void)
 	if (!datum) {
 		return NULL;
 	}
-	datum->els = st_init_numtable_with_size(DEFAULT_TABLE_SIZE);
+	datum->els = malloc(DEFAULT_TABLE_SIZE * sizeof(avro_datum_t));
 	if (!datum->els) {
 		free(datum);
 		return NULL;
 	}
+	datum->num_els = 0;
 
 	avro_datum_init(&datum->obj, AVRO_ARRAY);
 	return &datum->obj;
+}
+
+int
+avro_array_get(const avro_datum_t array_datum, int64_t index, avro_datum_t * value)
+{
+	if (is_avro_datum(array_datum) && is_avro_array(array_datum) && (index >= 0)) {
+        const struct avro_array_datum_t * array = avro_datum_to_array(array_datum);
+		if ((index >= 0) && (index < array->num_els)) {
+            *value = array->els[index];
+            return 0;
+		}
+    }
+    return EINVAL;
 }
 
 int
@@ -695,8 +711,9 @@ avro_array_append_datum(const avro_datum_t array_datum,
 		return EINVAL;
 	}
 	array = avro_datum_to_array(array_datum);
-	st_insert(array->els, array->els->num_entries,
-		  (st_data_t) avro_datum_incref(datum));
+	array->els = (avro_datum_t *)realloc(array->els,
+			    (array->num_els + 1) * sizeof(avro_datum_t));
+	array->els[array->num_els++] = avro_datum_incref(datum);
 	return 0;
 }
 
@@ -706,15 +723,6 @@ static int char_datum_free_foreach(char *key, avro_datum_t datum, void *arg)
 
 	avro_datum_decref(datum);
 	free(key);
-	return ST_DELETE;
-}
-
-static int array_free_foreach(int i, avro_datum_t datum, void *arg)
-{
-	AVRO_UNUSED(i);
-	AVRO_UNUSED(arg);
-
-	avro_datum_decref(datum);
 	return ST_DELETE;
 }
 
@@ -775,6 +783,7 @@ static void avro_datum_free(avro_datum_t datum)
 			break;
 
 		case AVRO_RECORD:{
+				int i;
 				struct avro_record_datum_t *record;
 				record = avro_datum_to_record(datum);
 				free((void *)record->name);
@@ -783,7 +792,10 @@ static void avro_datum_free(avro_datum_t datum)
 				}
 				st_foreach(record->fields_byname,
 					   char_datum_free_foreach, 0);
-				st_free_table(record->field_order);
+				for (i = 0; i < record->num_fields; i++) {
+					// free((void *)record->field_order[i]);
+				}
+				free(record->field_order);
 				st_free_table(record->fields_byname);
 				free(record);
 			}
@@ -815,10 +827,13 @@ static void avro_datum_free(avro_datum_t datum)
 			}
 			break;
 		case AVRO_ARRAY:{
+				int i;
 				struct avro_array_datum_t *array;
 				array = avro_datum_to_array(datum);
-				st_foreach(array->els, array_free_foreach, 0);
-				st_free_table(array->els);
+				for (i = 0; i < array->num_els; i++) {
+					avro_datum_decref(array->els[i]);
+				}
+				free(array->els);
 				free(array);
 			}
 			break;

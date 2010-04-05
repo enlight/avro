@@ -24,17 +24,11 @@ array_equal(struct avro_array_datum_t *a, struct avro_array_datum_t *b)
 {
 	long i;
 
-	if (a->els->num_entries != b->els->num_entries) {
+	if (a->num_els != b->num_els) {
 		return 0;
 	}
-	for (i = 0; i < a->els->num_entries; i++) {
-		union {
-			st_data_t data;
-			avro_datum_t datum;
-		} ael, bel;
-		st_lookup(a->els, i, &ael.data);
-		st_lookup(b->els, i, &bel.data);
-		if (!avro_datum_equal(ael.datum, bel.datum)) {
+	for (i = 0; i < a->num_els; i++) {
+		if (!avro_datum_equal(a->els[i], b->els[i])) {
 			return 0;
 		}
 	}
