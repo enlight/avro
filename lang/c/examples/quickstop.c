@@ -134,6 +134,8 @@ int main(void)
 	int64_t i;
 	const char *dbname = "quickstop.db";
 
+	avro_init();
+
 	/* Initialize the schema structure from JSON */
 	init_schema();
 
@@ -195,5 +197,7 @@ int main(void)
 
 	/* We don't need this schema anymore */
 	avro_schema_decref(person_schema);
+
+	avro_shutdown();
 	return 0;
 }

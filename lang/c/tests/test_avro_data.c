@@ -343,6 +343,8 @@ int main(void)
 		"union", test_union}
 	};
 
+	avro_init();
+
 	init_rand();
 	for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
 		struct avro_tests *test = tests + i;
@@ -351,5 +353,8 @@ int main(void)
 			return EXIT_FAILURE;
 		}
 	}
+
+	avro_shutdown();
+
 	return EXIT_SUCCESS;
 }

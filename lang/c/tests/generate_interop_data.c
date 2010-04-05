@@ -41,6 +41,8 @@ int main(int argc, char *argv[])
 		KIND_C
 	};
 
+	avro_init();
+
 	if (argc != 3) {
 		exit(EXIT_FAILURE);
 	}
@@ -108,5 +110,6 @@ int main(int argc, char *argv[])
 	fprintf(stderr, "ok\n");
 	check(rval, avro_file_reader_close(file_reader));
 	fprintf(stderr, "Closed reader.\n");
+	avro_shutdown();
 	return 0;
 }

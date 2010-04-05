@@ -38,6 +38,8 @@ struct avro_atom_table_t_
     int32_t freelist;
 };
 
+avro_atom_table_t g_avro_atom_table = NULL;
+
 // ELF hash
 static int32_t _atom_string_hash(const char *string)
 {
@@ -54,7 +56,7 @@ static int32_t _atom_string_hash(const char *string)
 	return h;
 }
 
-avro_atom_table_t avro_atom_table_new(int32_t size)
+avro_atom_table_t avro_atom_table_create(int32_t size)
 {
 	avro_atom_table_t table;
 	int32_t i;
@@ -78,7 +80,7 @@ avro_atom_table_t avro_atom_table_new(int32_t size)
 	return table;
 }
 
-void avro_atom_table_free(avro_atom_table_t table)
+void avro_atom_table_destroy(avro_atom_table_t table)
 {
 	int32_t i;
 	for (i = 0; i < table->size; i++) {
@@ -161,13 +163,41 @@ avro_atom_t avro_atom_table_add(avro_atom_table_t table, const char *str, int32_
 	return atom;
 }
 
-avro_atom_t avro_atom_incref(avro_atom_table_t table, avro_atom_t atom)
+avro_atom_t avro_atom_table_lookup(avro_atom_table_t table, const char *str, int32_t length)
+{
+	int32_t hash_value = _atom_string_hash(str);
+	avro_atom_t atom;
+
+	/* Look for an existing identifier. */
+	atom = table->hashtab[hash_value % table->size];
+	while (atom != -1) {
+		if (table->entries[atom].hash_value == hash_value &&
+			table->entries[atom].length == length &&
+			strcmp(table->entries[atom].str, str) == 0) {
+			table->entries[atom].refcount++;
+			return atom;
+		}
+		atom = table->entries[atom].next;
+	}
+	return -1;
+}
+
+int avro_atom_table_describe(avro_atom_table_t table, avro_atom_t atom, const char **s, int32_t *length)
+{
+	if (NULL != table->entries[atom].str) {
+		*s = table->entries[atom].str;
+		*length = table->entries[atom].length;
+	}
+	return -1;
+}
+
+avro_atom_t avro_atom_table_incref(avro_atom_table_t table, avro_atom_t atom)
 {
 	table->entries[atom].refcount++;
 	return atom;
 }
 
-void avro_atom_decref(avro_atom_table_t table, avro_atom_t atom)
+void avro_atom_table_decref(avro_atom_table_t table, avro_atom_t atom)
 {
 	int32_t bucket, *p;
 
@@ -192,14 +222,5 @@ void avro_atom_decref(avro_atom_table_t table, avro_atom_t atom)
 		table->freelist = atom;
 		table->count--;
 	}
-}
-
-int avro_atom_get(avro_atom_table_t table, avro_atom_t atom, const char **s, int32_t *length)
-{
-	if (NULL != table->entries[atom].str) {
-		*s = table->entries[atom].str;
-		*length = table->entries[atom].length;
-	}
-	return -1;
 }
 

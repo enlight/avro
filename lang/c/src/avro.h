@@ -94,6 +94,12 @@ typedef struct avro_reader_t_ *avro_reader_t;
 typedef struct avro_writer_t_ *avro_writer_t;
 
 /*
+ * Initialize the underlying library and properly close things down
+ */
+void avro_init(void);
+void avro_shutdown(void);
+
+/*
  * schema 
  */
 typedef struct avro_obj_t *avro_schema_t;
@@ -286,15 +292,23 @@ int avro_file_reader_close(avro_file_reader_t reader);
 typedef int32_t avro_atom_t;
 
 typedef struct avro_atom_table_t_ *avro_atom_table_t;
+extern avro_atom_table_t g_avro_atom_table;
 
-avro_atom_table_t avro_atom_table_new(int32_t);
-void avro_atom_table_free(avro_atom_table_t table);
+avro_atom_table_t avro_atom_table_create(int32_t);
+void avro_atom_table_destroy(avro_atom_table_t table);
 
 avro_atom_t avro_atom_table_add(avro_atom_table_t table, const char *s, int32_t length);
-int avro_atom_get(avro_atom_table_t table, avro_atom_t atom, const char **s, int32_t *length);
+avro_atom_t avro_atom_table_lookup(avro_atom_table_t table, const char *s, int32_t length);
+int avro_atom_table_describe(avro_atom_table_t table, avro_atom_t atom, const char **s, int32_t *length);
 
-avro_atom_t avro_atom_incref(avro_atom_table_t table, avro_atom_t atom);
-void avro_atom_decref(avro_atom_table_t table, avro_atom_t atom);
+avro_atom_t avro_atom_table_incref(avro_atom_table_t table, avro_atom_t atom);
+void avro_atom_table_decref(avro_atom_table_t table, avro_atom_t atom);
+
+#define avro_atom_add(s, length) avro_atom_table_add(g_avro_atom_table, s, length)
+#define avro_atom_lookup(s, length) avro_atom_table_lookup(g_avro_atom_table, s, length)
+#define avro_atom_describe(atom, s, length) avro_atom_table_describe(g_avro_atom_table, atom, s, length)
+#define avro_atom_incref(atom) avro_atom_table_incref(g_avro_atom_table, atom)
+#define avro_atom_decref(atom) avro_atom_table_decref(g_avro_atom_table, atom)
 
 CLOSE_EXTERN
 #endif
