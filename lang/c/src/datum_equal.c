@@ -116,7 +116,7 @@ static int union_equal(struct avro_union_datum_t *a,
 	return avro_datum_equal(a->value, b->value);
 }
 
-int avro_datum_equal(avro_datum_t a, avro_datum_t b)
+int avro_datum_equal(const avro_datum_t a, const avro_datum_t b)
 {
 	if (!(is_avro_datum(a) && is_avro_datum(b))) {
 		return 0;

@@ -244,7 +244,7 @@ void avro_datum_decref(avro_datum_t value);
 
 void avro_datum_print(avro_datum_t value, FILE * fp);
 
-int avro_datum_equal(avro_datum_t a, avro_datum_t b);
+int avro_datum_equal(const avro_datum_t a, const avro_datum_t b);
 
 int avro_schema_match(avro_schema_t writers_schema,
 		      avro_schema_t readers_schema);
