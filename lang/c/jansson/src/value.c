@@ -626,8 +626,8 @@ double json_number_value(const json_t *json)
 json_t *json_true(void)
 {
     static json_t the_true = {
-        .type = JSON_TRUE,
-        .refcount = (unsigned int)1
+        JSON_TRUE,      // type
+        (unsigned int)1 // refcount
     };
     return &the_true;
 }
@@ -636,8 +636,8 @@ json_t *json_true(void)
 json_t *json_false(void)
 {
     static json_t the_false = {
-        .type = JSON_FALSE,
-        .refcount = (unsigned int)1
+        JSON_FALSE,     // type
+        (unsigned int)1 // refcount
     };
     return &the_false;
 }
@@ -646,8 +646,8 @@ json_t *json_false(void)
 json_t *json_null(void)
 {
     static json_t the_null = {
-        .type = JSON_NULL,
-        .refcount = (unsigned int)1
+        JSON_NULL,      // type
+        (unsigned int)1 // refcount
     };
     return &the_null;
 }

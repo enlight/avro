@@ -9,6 +9,7 @@
 #define JANSSON_H
 
 #include <stdio.h>
+#include "config.h"
 
 #ifdef __cplusplus
 extern "C" {

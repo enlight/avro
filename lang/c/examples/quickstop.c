@@ -18,7 +18,9 @@
 #include <avro.h>
 #include <stdio.h>
 #include <stdlib.h>
+#ifndef WIN32
 #include <unistd.h>
+#endif
 
 avro_schema_t person_schema;
 int64_t id = 0;

@@ -6,6 +6,7 @@
  */
 
 #include <stdlib.h>
+#include "config.h"
 #include "hashtable.h"
 
 typedef struct hashtable_list list_t;
