@@ -1,5 +1,5 @@
-#ifndef AVRO_CONFIG_H
-#define AVRO_CONFIG_H
+#ifndef AVRO_ALLOCATOR_H
+#define AVRO_ALLOCATOR_H
 /*
 * Licensed to the Apache Software Foundation (ASF) under one or more
 * contributor license agreements.  See the NOTICE file distributed with
@@ -17,14 +17,23 @@
 * permissions and limitations under the License. 
 */
 
-#ifdef WIN32
+#include <stddef.h>
 
-// MSVC doesn't support C99, hence inline is not recognized as a keyword,
-// so we need to use the MSVC specific __inline instead.
-#define inline __inline
+typedef void * (*avro_malloc_def)(size_t size);
+typedef void * (*avro_calloc_def)(size_t count, size_t size);
+typedef void * (*avro_realloc_def)(void *ptr, size_t size);
+typedef void   (*avro_free_def)(void *ptr);
 
-#define snprintf _snprintf
+struct avro_allocator_t_
+{
+    avro_malloc_def  malloc;
+    avro_calloc_def  calloc;
+    avro_realloc_def realloc;
+    avro_free_def    free;
+};
 
-#endif // WIN32
+extern struct avro_allocator_t_ g_avro_allocator;
 
-#endif // AVRO_CONFIG_H
+char* avro_strdup(const char* source);
+
+#endif // AVRO_ALLOCATOR_H

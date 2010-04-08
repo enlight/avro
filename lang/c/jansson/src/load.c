@@ -19,6 +19,7 @@
 #include "jansson_private.h"
 #include "strbuffer.h"
 #include "utf.h"
+#include "allocator.h"
 
 #define TOKEN_INVALID         -1
 #define TOKEN_EOF              0
@@ -307,7 +308,7 @@ static void lex_scan_string(lex_t *lex, json_error_t *error)
          - two \uXXXX escapes (length 12) forming an UTF-16 surrogate pair
            are converted to 4 bytes
     */
-    lex->value.string = malloc(lex->saved_text.length + 1);
+    lex->value.string = g_avro_allocator.malloc(lex->saved_text.length + 1);
     if(!lex->value.string) {
         /* this is not very nice, since TOKEN_INVALID is returned */
         goto out;
@@ -397,7 +398,7 @@ static void lex_scan_string(lex_t *lex, json_error_t *error)
     return;
 
 out:
-    free(lex->value.string);
+    g_avro_allocator.free(lex->value.string);
 }
 
 static int lex_scan_number(lex_t *lex, char c, json_error_t *error)
@@ -510,7 +511,7 @@ static int lex_scan(lex_t *lex, json_error_t *error)
     strbuffer_clear(&lex->saved_text);
 
     if(lex->token == TOKEN_STRING) {
-        free(lex->value.string);
+        g_avro_allocator.free(lex->value.string);
         lex->value.string = NULL;
     }
 
@@ -602,7 +603,7 @@ static int lex_init(lex_t *lex, get_func get, eof_func eof, void *data)
 static void lex_close(lex_t *lex)
 {
     if(lex->token == TOKEN_STRING)
-        free(lex->value.string);
+        g_avro_allocator.free(lex->value.string);
     strbuffer_close(&lex->saved_text);
 }
 
@@ -636,7 +637,7 @@ static json_t *parse_object(lex_t *lex, json_error_t *error)
 
         lex_scan(lex, error);
         if(lex->token != ':') {
-            free(key);
+            g_avro_allocator.free(key);
             error_set(error, lex, "':' expected");
             goto error;
         }
@@ -644,18 +645,18 @@ static json_t *parse_object(lex_t *lex, json_error_t *error)
         lex_scan(lex, error);
         value = parse_value(lex, error);
         if(!value) {
-            free(key);
+            g_avro_allocator.free(key);
             goto error;
         }
 
         if(json_object_set_nocheck(object, key, value)) {
-            free(key);
+            g_avro_allocator.free(key);
             json_decref(value);
             goto error;
         }
 
         json_decref(value);
-        free(key);
+        g_avro_allocator.free(key);
 
         lex_scan(lex, error);
         if(lex->token != ',')

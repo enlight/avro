@@ -35,6 +35,11 @@ else()
         linux/dir_iterator.c
     )
 endif()
+if(MSVC)
+    set_target_properties(test_avro_schema PROPERTIES
+        COMPILE_DEFINITIONS "_CRT_SECURE_NO_WARNINGS"
+    )
+endif()
 target_link_libraries(test_avro_schema avro-static)
 add_test(test_avro_schema ${CMAKE_COMMAND} -E chdir ${AvroC_SOURCE_DIR}/tests ${CMAKE_CURRENT_BINARY_DIR}/test_avro_schema)
 
